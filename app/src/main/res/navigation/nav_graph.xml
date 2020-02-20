@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/issueFragment">
+
+    <fragment
+        android:id="@+id/issueFragment"
+        android:name="com.sohel.mvvmdemo.ui.issue.IssueFragment"
+        android:label="IssueFragment" >
+        <action
+            android:id="@+id/action_issueFragment_to_commentFragment"
+            app:destination="@id/commentFragment"
+            app:enterAnim="@anim/fragment_close_enter"
+            app:exitAnim="@anim/fragment_close_exit" />
+    </fragment>
+    <fragment
+        android:id="@+id/commentFragment"
+        android:name="com.sohel.mvvmdemo.ui.comment.CommentFragment"
+        android:label="CommentFragment" />
+</navigation>
