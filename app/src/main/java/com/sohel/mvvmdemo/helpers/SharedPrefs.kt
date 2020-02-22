@@ -30,6 +30,10 @@ object SharedPrefs {
         return mSharedPref.getFloat(key,value)
     }
 
+    fun read(key:String, value:Long):Long?{
+        return mSharedPref.getLong(key,value)
+    }
+
     fun write(key:String, value:String){
         val prefsEditor: SharedPreferences.Editor= mSharedPref.edit()
         with(prefsEditor){
@@ -58,6 +62,14 @@ object SharedPrefs {
         val prefsEditor:SharedPreferences.Editor= mSharedPref.edit()
         with(prefsEditor){
             putFloat(key,value)
+            commit()
+        }
+    }
+
+    fun write(key:String, value: Long){
+        val prefsEditor:SharedPreferences.Editor= mSharedPref.edit()
+        with(prefsEditor){
+            putLong(key,value)
             commit()
         }
     }

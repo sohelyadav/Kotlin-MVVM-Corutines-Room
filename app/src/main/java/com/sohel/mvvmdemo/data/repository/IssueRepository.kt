@@ -12,18 +12,26 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import org.threeten.bp.LocalDate
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.*
 
 class IssueRepository {
 
+    companion object {
+        @JvmField
+        val TAG: String = IssueRepository::class.java.simpleName
+    }
+
     private var mIssuesDao: IssuesDao? = null
+    val db: AppDatabase = AppDatabase.invoke(ApplicationController.applicationContext())
 
     var job: CompletableJob? = null
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
     fun getIssue(): LiveData<List<IssueResponse>> {
-        val lastFetchTime =
-            LocalDate.parse(SharedPrefs.read(SharedPrefs.SAVE_TIME, LocalDate.now().toString()))
-        Log.e("lastFetchTime", lastFetchTime.toString())
-
+        val lastFetchTime = (SharedPrefs.read(SharedPrefs.SAVE_TIME, Date().toString()))!!
+        Log.e(TAG, "last fetch date::: $lastFetchTime")
         job = Job()
         return object : LiveData<List<IssueResponse>>() {
             override fun onActive() {
@@ -31,14 +39,13 @@ class IssueRepository {
                 job?.let { theJob ->
                     CoroutineScope(IO + theJob).launch {
                         val response =
-                            if (false) {
-                                Log.e("Issue Repository:::", "fetching from DB")
+                            if (isFetchCurrentNeeded(lastFetchTime)) {
+                                Log.e(TAG, "fetching from DB")
                                 getDataFromDB()
                             } else {
-                                Log.e("Issue Repository:::", "fetching from Server")
-                                RetrofitInstance.apiService.getIssues()
+                                Log.e(TAG, "fetching from Server")
+                                fetchDataFromRemote()
                             }
-                        saveDataToDB(response)
                         withContext(Main) {
                             value = response
                             theJob.complete()
@@ -49,23 +56,38 @@ class IssueRepository {
         }
     }
 
-
-    private fun isFetchCurrentNeeded(lastFetchTime: LocalDate): Boolean {
-        val twentyFourHoursAgo = LocalDate.now().minusDays(1)
-        return lastFetchTime.isAfter(twentyFourHoursAgo) || lastFetchTime.isEqual(twentyFourHoursAgo)
+    private suspend fun fetchDataFromRemote(): List<IssueResponse> {
+        val serverResponse = RetrofitInstance.apiService.getIssues()
+        saveDataToDB(serverResponse)
+        return serverResponse
     }
 
-    fun saveDataToDB(issueList: List<IssueResponse>) {
+    private fun isFetchCurrentNeeded(lastFetchTime: String): Boolean {
+        try {
+            val oldDate: Date = dateFormat.parse(lastFetchTime)!!
+            val currentDate = Date()
+            Log.e(TAG, "Current date :: $currentDate")
+
+            if (oldDate.before(currentDate)) {
+                Log.e(TAG, "old date is previous date")
+                return true
+            }
+        } catch (e: ParseException) {
+            e.printStackTrace()
+        }
+        return false
+    }
+
+
+    private fun saveDataToDB(issueList: List<IssueResponse>) {
         GlobalScope.launch(IO) {
-            val db: AppDatabase = AppDatabase.invoke(ApplicationController.applicationContext())
             mIssuesDao = db.issueDao()
             mIssuesDao!!.upsert(issueList)
-            SharedPrefs.write(SharedPrefs.SAVE_TIME, LocalDate.now().toString())
+            SharedPrefs.write(SharedPrefs.SAVE_TIME, SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date()))
         }
     }
 
     suspend fun getDataFromDB(): List<IssueResponse> {
-        val db: AppDatabase = AppDatabase.invoke(ApplicationController.applicationContext())
         mIssuesDao = db.issueDao()
         return withContext(IO) {
             return@withContext mIssuesDao!!.getIssues()
