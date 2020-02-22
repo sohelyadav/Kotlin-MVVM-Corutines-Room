@@ -31,7 +31,7 @@ class IssueRepository {
                 job?.let { theJob ->
                     CoroutineScope(IO + theJob).launch {
                         val response =
-                            if (isFetchCurrentNeeded(lastFetchTime)) {
+                            if (false) {
                                 Log.e("Issue Repository:::", "fetching from DB")
                                 getDataFromDB()
                             } else {

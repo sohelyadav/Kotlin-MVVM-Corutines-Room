@@ -7,7 +7,7 @@
     <fragment
         android:id="@+id/issueFragment"
         android:name="com.sohel.mvvmdemo.ui.issue.IssueFragment"
-        android:label="IssueFragment" >
+        android:label="Github Ios Issues" >
         <action
             android:id="@+id/action_issueFragment_to_commentFragment"
             app:destination="@id/commentFragment"
@@ -17,5 +17,5 @@
     <fragment
         android:id="@+id/commentFragment"
         android:name="com.sohel.mvvmdemo.ui.comment.CommentFragment"
-        android:label="CommentFragment" />
+        android:label="Comments" />
 </navigation>
