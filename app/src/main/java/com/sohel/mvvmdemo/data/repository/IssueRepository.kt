@@ -11,10 +11,10 @@ import com.sohel.mvvmdemo.helpers.SharedPrefs
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
-import org.threeten.bp.LocalDate
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
+
 
 class IssueRepository {
 
@@ -27,7 +27,7 @@ class IssueRepository {
     val db: AppDatabase = AppDatabase.invoke(ApplicationController.applicationContext())
 
     var job: CompletableJob? = null
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
 
     fun getIssue(): LiveData<List<IssueResponse>> {
         val lastFetchTime = (SharedPrefs.read(SharedPrefs.SAVE_TIME, Date().toString()))!!
@@ -66,10 +66,10 @@ class IssueRepository {
         try {
             val oldDate: Date = dateFormat.parse(lastFetchTime)!!
             val currentDate = Date()
-            Log.e(TAG, "Current date :: $currentDate")
-
-            if (oldDate.before(currentDate)) {
-                Log.e(TAG, "old date is previous date")
+            val diff: Long = currentDate.time - oldDate.time
+            val diffHours = diff / (60 * 60 * 1000)
+            Log.e(TAG, "hours difference:::$diffHours")
+            if (diffHours < 24) {
                 return true
             }
         } catch (e: ParseException) {
@@ -83,7 +83,7 @@ class IssueRepository {
         GlobalScope.launch(IO) {
             mIssuesDao = db.issueDao()
             mIssuesDao!!.upsert(issueList)
-            SharedPrefs.write(SharedPrefs.SAVE_TIME, SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date()))
+            SharedPrefs.write(SharedPrefs.SAVE_TIME, dateFormat.format(Date()))
         }
     }
 
